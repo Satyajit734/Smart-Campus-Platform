@@ -4,6 +4,8 @@ const router = express.Router();
 
 const Post = require("../models/Post");
 const authMiddleware = require("../middleware/authMiddleware");
+const mongoose = require("mongoose");
+const authorizeRoles = require("../middleware/authorizeRoles");
 
 // ================ CREATE POST ================
 
@@ -165,7 +167,117 @@ router.delete("/:id", authMiddleware, async (req, res) => {
         });
     }
 });
+// ================ LIKE POST ================
 
+router.post("/:id/like", authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({
+                message: "Invalid post ID"
+            });
+        }
+
+        const post = await Post.findByIdAndUpdate(
+            id,
+            {
+                $addToSet: { likes: req.user.id }
+            },
+            { new: true }
+        );
+
+        if (!post) {
+            return res.status(404).json({
+                message: "Post not found"
+            });
+        }
+
+        res.status(200).json({
+            message: "Post liked successfully",
+            likeCount: post.likes.length,
+            likes: post.likes
+        });
+
+    } catch (error) {
+        console.error("Like Post Error:", error);
+
+        res.status(500).json({
+            message: "Failed to like post"
+        });
+    }
+});  
+// ================ UNLIKE POST ================
+
+router.delete("/:id/like", authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({
+                message: "Invalid post ID"
+            });
+        }
+
+        const post = await Post.findByIdAndUpdate(
+            id,
+            {
+                $pull: { likes: req.user.id }
+            },
+            { new: true }
+        );
+
+        if (!post) {
+            return res.status(404).json({
+                message: "Post not found"
+            });
+        }
+
+        res.status(200).json({
+            message: "Post unliked successfully",
+            likeCount: post.likes.length,
+            likes: post.likes
+        });
+
+    } catch (error) {
+        console.error("Unlike Post Error:", error);
+
+        res.status(500).json({
+            message: "Failed to unlike post"
+        });
+    }
+});
+// ================ ADMIN DELETE POST ================
+
+router.delete(
+    "/admin/:id",
+    authMiddleware,
+    authorizeRoles("admin"),
+    async (req, res) => {
+        try {
+            const post = await Post.findById(req.params.id);
+
+            if (!post) {
+                return res.status(404).json({
+                    message: "Post not found"
+                });
+            }
+
+            await post.deleteOne();
+
+            res.status(200).json({
+                message: "Post deleted successfully by Admin"
+            });
+
+        } catch (error) {
+            console.error("Admin Delete Error:", error);
+
+            res.status(500).json({
+                message: "Failed to delete post"
+            });
+        }
+    }
+);
 
 
 
