@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react'
 import './App.css'
 import Navbar from './components/Navbar'
@@ -6,7 +7,6 @@ import Home from './pages/Home'
 import Posts from './pages/Posts'
 
 function App() {
-
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   const toggleSidebar = () => {
@@ -14,7 +14,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A192F] text-white">
+    <div className="min-h-screen bg-[#EAF4F8] text-slate-700">
 
       <Navbar onMenuClick={toggleSidebar} />
 
@@ -22,6 +22,10 @@ function App() {
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
       />
+
+      <main className="pt-24 px-6 min-h-screen">
+        <Home />
+      </main>
 
     </div>
   )
