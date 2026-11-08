@@ -64,6 +64,69 @@ router.post("/register", async (req, res) => {
         });
     }
 });
+// ================= ADMIN REGISTER =================
+
+router.post("/admin/register", async (req, res) => {
+    try {
+        const { name, email, password, secretKey } = req.body;
+
+        if (!name || !email || !password || !secretKey) {
+            return res.status(400).json({
+                message: "All fields are required"
+            });
+        }
+
+        if (secretKey !== process.env.ADMIN_SECRET_KEY) {
+            return res.status(403).json({
+                message: "Invalid admin secret key"
+            });
+        }
+
+        if (password.length < 8) {
+            return res.status(400).json({
+                message: "Password must be at least 8 characters"
+            });
+        }
+
+        const normalizedEmail = email.trim().toLowerCase();
+
+        const existingUser = await User.findOne({
+            email: normalizedEmail
+        });
+
+        if (existingUser) {
+            return res.status(400).json({
+                message: "Email already registered"
+            });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const admin = await User.create({
+            name: name.trim(),
+            email: normalizedEmail,
+            password: hashedPassword,
+            role: "admin"
+        });
+
+        res.status(201).json({
+            message: "Admin registered successfully",
+            user: {
+                id: admin._id,
+                name: admin.name,
+                email: admin.email,
+                role: admin.role
+            }
+        });
+
+    } catch (error) {
+        console.error("Admin Register Error:", error);
+
+        res.status(500).json({
+            message: "Admin registration failed"
+        });
+    }
+});
 
 // ================= LOGIN =================
 router.post("/login", async (req, res) => {
@@ -280,5 +343,158 @@ router.get(
     }
 );
 
+// ================= ROLE-BASED PROFILE =================
+
+const getRoleProfile = (role) => async (req, res) => {
+    try {
+        const user = await User.findOne({
+            _id: req.user.id,
+            role: role
+        }).select("-password");
+
+        if (!user) {
+            return res.status(404).json({
+                message: "Profile not found"
+            });
+        }
+
+        res.status(200).json({
+            message: `${role} profile fetched successfully`,
+            user
+        });
+
+    } catch (error) {
+        console.error("Profile Error:", error);
+
+        res.status(500).json({
+            message: "Failed to fetch profile"
+        });
+    }
+};
+
+// ================= STUDENT PROFILE =================
+
+router.get(
+    "/student/profile",
+    authMiddleware,
+    authorizeRoles("student"),
+    getRoleProfile("student")
+);
+
+// ================= FACULTY PROFILE =================
+
+router.get(
+    "/faculty/profile",
+    authMiddleware,
+    authorizeRoles("faculty"),
+    getRoleProfile("faculty")
+);
+
+// ================= ADMIN PROFILE =================
+
+router.get(
+    "/admin/profile",
+    authMiddleware,
+    authorizeRoles("admin"),
+    getRoleProfile("admin")
+);
+// ================= UPDATE PROFILE =================
+
+router.put("/update-profile", authMiddleware, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+        // Fields allowed for each role
+        const allowedFields = {
+            student: ["name", "department", "profilePicture"],
+            faculty: ["name", "department", "designation", "profilePicture"],
+            admin: ["name", "designation", "profilePicture"]
+        };
+
+        const fields = allowedFields[user.role] || [];
+
+        let updated = false;
+
+        fields.forEach((field) => {
+            if (req.body[field] !== undefined) {
+                user[field] = req.body[field];
+                updated = true;
+            }
+        });
+
+        if (!updated) {
+            return res.status(400).json({
+                message: "No valid profile fields provided"
+            });
+        }
+
+        await user.save();
+
+        const updatedUser = await User.findById(user._id)
+            .select("-password");
+
+        res.status(200).json({
+            message: "Profile updated successfully",
+            user: updatedUser
+        });
+
+    } catch (error) {
+        console.error("Update Profile Error:", error);
+
+        res.status(500).json({
+            message: "Failed to update profile"
+        });
+    }
+});
+
+// ================= ADMIN UPDATE USER ROLE =================
+
+router.put(
+    "/users/:id/role",
+    authMiddleware,
+    authorizeRoles("admin"),
+    async (req, res) => {
+        try {
+            const { role } = req.body;
+            const validRoles = ["student", "faculty", "admin"];
+
+            if (!validRoles.includes(role)) {
+                return res.status(400).json({
+                    message: "Invalid role"
+                });
+            }
+
+            const user = await User.findByIdAndUpdate(
+                req.params.id,
+                { role },
+                { new: true, runValidators: true }
+            ).select("-password");
+
+            if (!user) {
+                return res.status(404).json({
+                    message: "User not found"
+                });
+            }
+
+            res.status(200).json({
+                message: "User role updated successfully",
+                user
+            });
+
+        } catch (error) {
+            console.error("Update Role Error:", error);
+
+            res.status(500).json({
+                message: "Failed to update user role"
+            });
+        }
+    }
+);
 
 module.exports = router;

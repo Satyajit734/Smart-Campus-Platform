@@ -1,3 +1,4 @@
+
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
@@ -28,6 +29,44 @@ const userSchema = new mongoose.Schema(
     },
 
     department: {
+      type: String,
+      default: "",
+    },
+
+   
+    studentId: {
+      type: String,
+      default: "",
+    },
+
+    course: {
+      type: String,
+      default: "",
+    },
+
+    semester: {
+      type: Number,
+      default: null,
+    },
+
+    
+    facultyId: {
+      type: String,
+      default: "",
+    },
+
+    designation: {
+      type: String,
+      default: "",
+    },
+
+   
+    adminId: {
+      type: String,
+      default: "",
+    },
+
+    profilePicture: {
       type: String,
       default: "",
     },
