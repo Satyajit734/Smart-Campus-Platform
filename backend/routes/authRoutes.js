@@ -9,6 +9,9 @@ const jwt = require("jsonwebtoken");
 const authMiddleware = require("../middleware/authMiddleware");
 const authorizeRoles = require("../middleware/authorizeRoles");
 
+const Post = require("../models/Post");
+const Comment = require("../models/Comment");
+
 // ================= REGISTER =================
 router.post("/register", async (req, res) => {
     try {
@@ -127,6 +130,95 @@ router.post("/admin/register", async (req, res) => {
         });
     }
 });
+
+
+// ================= ADMIN: REGISTER FACULTY =================
+
+router.post(
+    "/admin/register-faculty",
+    authMiddleware,
+    authorizeRoles("admin"),
+    async (req, res) => {
+        try {
+            const {
+                name,
+                email,
+                password,
+                department,
+                facultyId,
+                designation
+            } = req.body;
+
+            // Validate required fields
+            if (
+                !name ||
+                !email ||
+                !password ||
+                !department ||
+                !facultyId ||
+                !designation
+            ) {
+                return res.status(400).json({
+                    message: "All fields are required"
+                });
+            }
+
+            if (password.length < 8) {
+                return res.status(400).json({
+                    message: "Password must be at least 8 characters"
+                });
+            }
+
+            const normalizedEmail = email.trim().toLowerCase();
+
+            // Check existing email
+            const existingUser = await User.findOne({
+                email: normalizedEmail
+            });
+
+            if (existingUser) {
+                return res.status(400).json({
+                    message: "Email already registered"
+                });
+            }
+
+            // Hash password
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            // Create Faculty
+            const faculty = await User.create({
+                name: name.trim(),
+                email: normalizedEmail,
+                password: hashedPassword,
+                role: "faculty",
+                department: department.trim(),
+                facultyId: facultyId.trim(),
+                designation: designation.trim()
+            });
+
+            res.status(201).json({
+                message: "Faculty registered successfully",
+                faculty: {
+                    id: faculty._id,
+                    name: faculty.name,
+                    email: faculty.email,
+                    role: faculty.role,
+                    department: faculty.department,
+                    facultyId: faculty.facultyId,
+                    designation: faculty.designation
+                }
+            });
+
+        } catch (error) {
+            console.error("Faculty Registration Error:", error);
+
+            res.status(500).json({
+                message: "Faculty registration failed"
+            });
+        }
+    }
+);
+
 
 // ================= LOGIN =================
 router.post("/login", async (req, res) => {
@@ -492,6 +584,258 @@ router.put(
 
             res.status(500).json({
                 message: "Failed to update user role"
+            });
+        }
+    }
+);
+// ================ ADMIN DELETE USER ================
+router.delete(
+    "/users/:id",
+    authMiddleware,
+    authorizeRoles("admin"),
+    async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            // Validate MongoDB ID
+            if (!/^[0-9a-fA-F]{24}$/.test(id)) {
+                return res.status(400).json({
+                    message: "Invalid user ID"
+                });
+            }
+
+            const user = await User.findById(id);
+
+            if (!user) {
+                return res.status(404).json({
+                    message: "User not found"
+                });
+            }
+
+            // Admin cannot delete their own account
+            if (user._id.toString() === req.user.id) {
+                return res.status(403).json({
+                    message: "You cannot delete your own account"
+                });
+            }
+
+            // Protect the last admin account
+            if (user.role === "admin") {
+                const adminCount = await User.countDocuments({
+                    role: "admin"
+                });
+
+                if (adminCount <= 1) {
+                    return res.status(403).json({
+                        message: "Cannot delete the last admin"
+                    });
+                }
+            }
+
+            await User.findByIdAndDelete(id);
+
+            res.status(200).json({
+                message: "User deleted successfully",
+                deletedUser: {
+                    name: user.name,
+                    email: user.email,
+                    role: user.role
+                }
+            });
+
+        } catch (error) {
+            console.error("Delete User Error:", error);
+
+            res.status(500).json({
+                message: "Failed to delete user"
+            });
+        }
+    }
+);
+
+// ================ ADMIN UPDATE USER DETAILS ================
+
+router.put(
+    "/users/:id/details",
+    authMiddleware,
+    authorizeRoles("admin"),
+    async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            if (!/^[0-9a-fA-F]{24}$/.test(id)) {
+                return res.status(400).json({
+                    message: "Invalid user ID"
+                });
+            }
+
+            const user = await User.findById(id);
+
+            if (!user) {
+                return res.status(404).json({
+                    message: "User not found"
+                });
+            }
+
+            // Fields allowed for each role
+            const allowedFields = {
+                student: [
+                    "name",
+                    "department",
+                    "studentId",
+                    "course",
+                    "semester",
+                    "profilePicture"
+                ],
+                faculty: [
+                    "name",
+                    "department",
+                    "facultyId",
+                    "designation",
+                    "profilePicture"
+                ],
+                admin: [
+                    "name",
+                    "designation",
+                    "profilePicture"
+                ]
+            };
+
+            const fields = allowedFields[user.role] || [];
+            let updated = false;
+
+            fields.forEach((field) => {
+                if (req.body[field] !== undefined) {
+                    user[field] = req.body[field];
+                    updated = true;
+                }
+            });
+
+            if (!updated) {
+                return res.status(400).json({
+                    message: "No valid fields provided"
+                });
+            }
+
+            await user.save();
+
+            const updatedUser = await User.findById(id)
+                .select("-password");
+
+            res.status(200).json({
+                message: "User details updated successfully",
+                user: updatedUser
+            });
+
+        } catch (error) {
+            console.error("Admin Update User Error:", error);
+
+            res.status(500).json({
+                message: "Failed to update user details"
+            });
+        }
+    }
+);
+
+
+// ================= FACULTY DASHBOARD =================
+
+router.get(
+    "/faculty/dashboard",
+    authMiddleware,
+    authorizeRoles("faculty"),
+    async (req, res) => {
+        try {
+            const facultyId = req.user.id;
+
+            // Fetch faculty profile
+            const faculty = await User.findById(facultyId)
+                .select("-password");
+
+            if (!faculty) {
+                return res.status(404).json({
+                    message: "Faculty not found"
+                });
+            }
+
+            // Count faculty posts
+            const totalPosts = await Post.countDocuments({
+                author: facultyId
+            });
+
+            // Count faculty comments
+            const totalComments = await Comment.countDocuments({
+                author: facultyId
+            });
+
+            // Calculate total likes received on faculty posts
+            const facultyPosts = await Post.find({
+                author: facultyId
+            }).select("likes");
+
+            const totalLikes = facultyPosts.reduce(
+                (total, post) => total + post.likes.length,
+                0
+            );
+
+            res.status(200).json({
+                message: "Faculty dashboard fetched successfully",
+                dashboard: {
+                    profile: faculty,
+                    totalPosts,
+                    totalComments,
+                    totalLikes
+                }
+            });
+
+        } catch (error) {
+            console.error("Faculty Dashboard Error:", error);
+
+            res.status(500).json({
+                message: "Failed to fetch faculty dashboard"
+            });
+        }
+    }
+);
+
+
+ // ============== FACULTY: VIEW OWN DEPARTMENT STUDENTS ==============
+
+router.get(
+    "/faculty/students",
+    authMiddleware,
+    authorizeRoles("faculty"),
+    async (req, res) => {
+        try {
+            // Find logged-in faculty
+            const faculty = await User.findById(req.user.id);
+
+            if (!faculty) {
+                return res.status(404).json({
+                    message: "Faculty not found"
+                });
+            }
+
+            // Find students from the same department
+            const students = await User.find({
+                role: "student",
+                department: faculty.department
+            })
+                .select("-password")
+                .sort({ createdAt: -1 });
+
+            res.status(200).json({
+                message: "Department students fetched successfully",
+                department: faculty.department,
+                totalStudents: students.length,
+                students
+            });
+
+        } catch (error) {
+            console.error("Faculty Students Error:", error);
+
+            res.status(500).json({
+                message: "Failed to fetch department students"
             });
         }
     }

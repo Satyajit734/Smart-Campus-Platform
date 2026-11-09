@@ -279,6 +279,134 @@ router.delete(
     }
 );
 
+// ================ SEARCH POSTS ================
+
+router.get("/search", async (req, res) => {
+    try {
+        const { keyword } = req.query;
+
+        if (!keyword || !keyword.trim()) {
+            return res.status(400).json({
+                message: "Search keyword is required"
+            });
+        }
+
+        const posts = await Post.find({
+            $or: [
+                { title: { $regex: keyword.trim(), $options: "i" } },
+                { content: { $regex: keyword.trim(), $options: "i" } }
+            ]
+        })
+        .populate("author", "name email")
+        .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            message: "Search results fetched successfully",
+            totalPosts: posts.length,
+            posts
+        });
+
+    } catch (error) {
+        console.error("Search Posts Error:", error);
+
+        res.status(500).json({
+            message: "Failed to search posts"
+        });
+    }
+});
+
+// ================ FILTER POSTS ================
+
+router.get("/filter", async (req, res) => {
+    try {
+        const { sortBy } = req.query;
+
+        let sortOption = {};
+
+        if (sortBy === "latest") {
+            sortOption = { createdAt: -1 };
+        } 
+        else if (sortBy === "oldest") {
+            sortOption = { createdAt: 1 };
+        } 
+        else if (sortBy === "popular") {
+            sortOption = { likes: -1 };
+        } 
+        else {
+            return res.status(400).json({
+                message: "Invalid filter option"
+            });
+        }
+
+        const posts = await Post.find()
+            .populate("author", "name email")
+            .sort(sortOption);
+
+        res.status(200).json({
+            message: "Posts filtered successfully",
+            totalPosts: posts.length,
+            posts
+        });
+
+    } catch (error) {
+        console.error("Filter Posts Error:", error);
+
+        res.status(500).json({
+            message: "Failed to filter posts"
+        });
+    }
+});
+
+
+// ================ PAGINATION ================
+
+router.get("/pagination", async (req, res) => {
+    try {
+        let page = parseInt(req.query.page) || 1;
+        let limit = parseInt(req.query.limit) || 5;
+
+        if (
+            !Number.isInteger(page) ||
+            !Number.isInteger(limit) ||
+            page < 1 ||
+            limit < 1
+        ) {
+            return res.status(400).json({
+                message: "Invalid page or limit value"
+            });
+        }
+
+        // Maximum 50 posts per page
+        limit = Math.min(limit, 50);
+
+        const skip = (page - 1) * limit;
+
+        const totalPosts = await Post.countDocuments();
+
+        const posts = await Post.find()
+            .populate("author", "name email")
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        res.status(200).json({
+            message: "Posts fetched successfully",
+            currentPage: page,
+            totalPages: Math.ceil(totalPosts / limit),
+            totalPosts,
+            postsPerPage: limit,
+            posts
+        });
+
+    } catch (error) {
+        console.error("Pagination Error:", error);
+
+        res.status(500).json({
+            message: "Failed to fetch paginated posts"
+        });
+    }
+});
+
 
 
 module.exports = router;
