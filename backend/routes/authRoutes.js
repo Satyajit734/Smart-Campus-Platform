@@ -9,8 +9,7 @@ const jwt = require("jsonwebtoken");
 const authMiddleware = require("../middleware/authMiddleware");
 const authorizeRoles = require("../middleware/authorizeRoles");
 
-const Post = require("../models/Post");
-const Comment = require("../models/Comment");
+
 
 // ================= REGISTER =================
 router.post("/register", async (req, res) => {
@@ -223,6 +222,7 @@ router.post(
 // ================= LOGIN =================
 router.post("/login", async (req, res) => {
     try {
+        console.log("LOGIN BODY:", req.body);
         const { email, password } = req.body;
 
         if (!email || !password) {
@@ -251,6 +251,12 @@ router.post("/login", async (req, res) => {
         if (!isMatch) {
             return res.status(401).json({
                 message: "Invalid email or password"
+            });
+        }
+        // Check if account is active
+        if (user.isActive === false) {
+            return res.status(403).json({
+                message: "Your account is inactive. Please contact admin."
             });
         }
 
@@ -653,6 +659,7 @@ router.delete(
     }
 );
 
+
 // ================ ADMIN UPDATE USER DETAILS ================
 
 router.put(
@@ -663,6 +670,7 @@ router.put(
         try {
             const { id } = req.params;
 
+            // Validate MongoDB ID
             if (!/^[0-9a-fA-F]{24}$/.test(id)) {
                 return res.status(400).json({
                     message: "Invalid user ID"
@@ -677,6 +685,30 @@ router.put(
                 });
             }
 
+            // Validate isActive field
+            if (
+                req.body.isActive !== undefined &&
+                typeof req.body.isActive !== "boolean"
+            ) {
+                return res.status(400).json({
+                    message: "isActive must be true or false"
+                });
+            }
+
+            // Protect the last active admin
+            if (user.role === "admin" && req.body.isActive === false) {
+                const activeAdminCount = await User.countDocuments({
+                    role: "admin",
+                    isActive: true
+                });
+
+                if (activeAdminCount <= 1) {
+                    return res.status(403).json({
+                        message: "Cannot deactivate the last active admin"
+                    });
+                }
+            }
+
             // Fields allowed for each role
             const allowedFields = {
                 student: [
@@ -685,19 +717,22 @@ router.put(
                     "studentId",
                     "course",
                     "semester",
-                    "profilePicture"
+                    "profilePicture",
+                    "isActive"
                 ],
                 faculty: [
                     "name",
                     "department",
                     "facultyId",
                     "designation",
-                    "profilePicture"
+                    "profilePicture",
+                    "isActive"
                 ],
                 admin: [
                     "name",
                     "designation",
-                    "profilePicture"
+                    "profilePicture",
+                    "isActive"
                 ]
             };
 
@@ -732,67 +767,6 @@ router.put(
 
             res.status(500).json({
                 message: "Failed to update user details"
-            });
-        }
-    }
-);
-
-
-// ================= FACULTY DASHBOARD =================
-
-router.get(
-    "/faculty/dashboard",
-    authMiddleware,
-    authorizeRoles("faculty"),
-    async (req, res) => {
-        try {
-            const facultyId = req.user.id;
-
-            // Fetch faculty profile
-            const faculty = await User.findById(facultyId)
-                .select("-password");
-
-            if (!faculty) {
-                return res.status(404).json({
-                    message: "Faculty not found"
-                });
-            }
-
-            // Count faculty posts
-            const totalPosts = await Post.countDocuments({
-                author: facultyId
-            });
-
-            // Count faculty comments
-            const totalComments = await Comment.countDocuments({
-                author: facultyId
-            });
-
-            // Calculate total likes received on faculty posts
-            const facultyPosts = await Post.find({
-                author: facultyId
-            }).select("likes");
-
-            const totalLikes = facultyPosts.reduce(
-                (total, post) => total + post.likes.length,
-                0
-            );
-
-            res.status(200).json({
-                message: "Faculty dashboard fetched successfully",
-                dashboard: {
-                    profile: faculty,
-                    totalPosts,
-                    totalComments,
-                    totalLikes
-                }
-            });
-
-        } catch (error) {
-            console.error("Faculty Dashboard Error:", error);
-
-            res.status(500).json({
-                message: "Failed to fetch faculty dashboard"
             });
         }
     }

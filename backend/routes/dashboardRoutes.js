@@ -6,7 +6,9 @@ const authMiddleware = require("../middleware/authMiddleware");
 const authorizeRoles = require("../middleware/authorizeRoles");
 
 const {
-    getStudentDashboard
+    getStudentDashboard,
+    getAdminDashboard,
+    getFacultyDashboard
 } = require("../controllers/dashboardController");
 
 // Student Dashboard
@@ -15,6 +17,21 @@ router.get(
     authMiddleware,
     authorizeRoles("student"),
     getStudentDashboard
+);
+// Faculty Dashboard
+router.get(
+    "/faculty",
+    authMiddleware,
+    authorizeRoles("faculty"),
+    getFacultyDashboard
+);
+
+// Admin Dashboard
+router.get(
+    "/admin",
+    authMiddleware,
+    authorizeRoles("admin"),
+    getAdminDashboard
 );
 
 module.exports = router;
