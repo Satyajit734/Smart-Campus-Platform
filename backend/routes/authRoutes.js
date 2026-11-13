@@ -551,6 +551,7 @@ router.put("/update-profile", authMiddleware, async (req, res) => {
     }
 });
 
+
 // ================= ADMIN UPDATE USER ROLE =================
 
 router.put(
@@ -559,20 +560,26 @@ router.put(
     authorizeRoles("admin"),
     async (req, res) => {
         try {
+            const { id } = req.params;
             const { role } = req.body;
+
             const validRoles = ["student", "faculty", "admin"];
 
+            // Validate MongoDB ID
+            if (!/^[0-9a-fA-F]{24}$/.test(id)) {
+                return res.status(400).json({
+                    message: "Invalid user ID"
+                });
+            }
+
+            // Validate role
             if (!validRoles.includes(role)) {
                 return res.status(400).json({
                     message: "Invalid role"
                 });
             }
 
-            const user = await User.findByIdAndUpdate(
-                req.params.id,
-                { role },
-                { new: true, runValidators: true }
-            ).select("-password");
+            const user = await User.findById(id);
 
             if (!user) {
                 return res.status(404).json({
@@ -580,9 +587,33 @@ router.put(
                 });
             }
 
+            // Protect the last active admin from demotion
+            if (
+                user.role === "admin" &&
+                user.isActive === true &&
+                role !== "admin"
+            ) {
+                const activeAdminCount = await User.countDocuments({
+                    role: "admin",
+                    isActive: true
+                });
+
+                if (activeAdminCount <= 1) {
+                    return res.status(403).json({
+                        message: "Cannot demote the last active admin"
+                    });
+                }
+            }
+
+            user.role = role;
+            await user.save();
+
+            const updatedUser = await User.findById(id)
+                .select("-password");
+
             res.status(200).json({
                 message: "User role updated successfully",
-                user
+                user: updatedUser
             });
 
         } catch (error) {
@@ -594,6 +625,7 @@ router.put(
         }
     }
 );
+
 // ================ ADMIN DELETE USER ================
 router.delete(
     "/users/:id",

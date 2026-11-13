@@ -13,9 +13,14 @@ router.post("/", authMiddleware, async (req, res) => {
     try {
         const { title, content } = req.body;
 
-        if (!title || !content) {
+            if (
+            typeof title !== "string" ||
+            typeof content !== "string" ||
+            !title.trim() ||
+            !content.trim()
+        ) {
             return res.status(400).json({
-                message: "Title and content are required"
+                message: "Title and content must be valid non-empty strings"
             });
         }
 
@@ -249,13 +254,24 @@ router.delete("/:id/like", authMiddleware, async (req, res) => {
 });
 // ================ ADMIN DELETE POST ================
 
+// ================ ADMIN DELETE POST ================
+
 router.delete(
     "/admin/:id",
     authMiddleware,
     authorizeRoles("admin"),
     async (req, res) => {
         try {
-            const post = await Post.findById(req.params.id);
+            const { id } = req.params;
+
+            // Validate MongoDB ID
+            if (!mongoose.isValidObjectId(id)) {
+                return res.status(400).json({
+                    message: "Invalid post ID"
+                });
+            }
+
+            const post = await Post.findById(id);
 
             if (!post) {
                 return res.status(404).json({
@@ -285,20 +301,49 @@ router.get("/search", async (req, res) => {
     try {
         const { keyword } = req.query;
 
-        if (!keyword || !keyword.trim()) {
+        // Validate keyword
+        if (
+            typeof keyword !== "string" ||
+            !keyword.trim()
+        ) {
             return res.status(400).json({
-                message: "Search keyword is required"
+                message: "A valid search keyword is required"
             });
         }
 
+        const searchKeyword = keyword.trim();
+
+        // Maximum keyword length
+        if (searchKeyword.length > 100) {
+            return res.status(400).json({
+                message: "Search keyword cannot exceed 100 characters"
+            });
+        }
+
+        // Escape special regex characters
+        const escapedKeyword = searchKeyword.replace(
+            /[.*+?^${}()|[\]\\]/g,
+            "\\$&"
+        );
+
         const posts = await Post.find({
             $or: [
-                { title: { $regex: keyword.trim(), $options: "i" } },
-                { content: { $regex: keyword.trim(), $options: "i" } }
+                {
+                    title: {
+                        $regex: escapedKeyword,
+                        $options: "i"
+                    }
+                },
+                {
+                    content: {
+                        $regex: escapedKeyword,
+                        $options: "i"
+                    }
+                }
             ]
         })
-        .populate("author", "name email")
-        .sort({ createdAt: -1 });
+            .populate("author", "name email")
+            .sort({ createdAt: -1 });
 
         res.status(200).json({
             message: "Search results fetched successfully",
@@ -314,6 +359,7 @@ router.get("/search", async (req, res) => {
         });
     }
 });
+
 
 // ================ FILTER POSTS ================
 
