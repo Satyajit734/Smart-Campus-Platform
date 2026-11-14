@@ -66,7 +66,7 @@ const getStudentDashboard = async (req, res) => {
     }
 };
 
-
+//faculty dashboard//
 const getFacultyDashboard = async (req, res) => {
     try {
         const facultyId = req.user.id;

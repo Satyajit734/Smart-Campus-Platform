@@ -348,7 +348,7 @@ router.get(
     }
 );
 
-// ================= ADMIN ACCESS =================
+// ==== ADMIN ACCESS ===
 // Only Admin can access
 router.get(
     "/admin",

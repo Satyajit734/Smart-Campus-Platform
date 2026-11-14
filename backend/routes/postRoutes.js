@@ -71,9 +71,20 @@ router.get("/", async (req, res) => {
 
 // ================ UPDATE POST ================
 
+
+ // ================ UPDATE POST ================
+
 router.put("/:id", authMiddleware, async (req, res) => {
     try {
+        const { id } = req.params;
         const { title, content } = req.body;
+
+        // Validate MongoDB ID
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({
+                message: "Invalid post ID"
+            });
+        }
 
         if (title === undefined && content === undefined) {
             return res.status(400).json({
@@ -82,15 +93,17 @@ router.put("/:id", authMiddleware, async (req, res) => {
         }
 
         if (
-            (title !== undefined && (typeof title !== "string" || !title.trim())) ||
-            (content !== undefined && (typeof content !== "string" || !content.trim()))
+            (title !== undefined &&
+                (typeof title !== "string" || !title.trim())) ||
+            (content !== undefined &&
+                (typeof content !== "string" || !content.trim()))
         ) {
             return res.status(400).json({
                 message: "Title and content cannot be empty"
             });
         }
 
-        const post = await Post.findById(req.params.id);
+        const post = await Post.findById(id);
 
         if (!post) {
             return res.status(404).json({
@@ -98,7 +111,6 @@ router.put("/:id", authMiddleware, async (req, res) => {
             });
         }
 
-        // Check post ownership
         if (post.author.toString() !== req.user.id) {
             return res.status(403).json({
                 message: "You cannot update this post"
@@ -123,17 +135,12 @@ router.put("/:id", authMiddleware, async (req, res) => {
     } catch (error) {
         console.error("Update Post Error:", error);
 
-        if (error.name === "CastError") {
-            return res.status(400).json({
-                message: "Invalid post ID"
-            });
-        }
-
         res.status(500).json({
             message: "Failed to update post"
         });
     }
 });
+
 // ================ DELETE POST ================
 
 router.delete("/:id", authMiddleware, async (req, res) => {
@@ -404,23 +411,35 @@ router.get("/filter", async (req, res) => {
 });
 
 
+
 // ================ PAGINATION ================
 
 router.get("/pagination", async (req, res) => {
     try {
-        let page = parseInt(req.query.page) || 1;
-        let limit = parseInt(req.query.limit) || 5;
+        const { page: pageQuery, limit: limitQuery } = req.query;
 
+        // Validate page
         if (
-            !Number.isInteger(page) ||
-            !Number.isInteger(limit) ||
-            page < 1 ||
-            limit < 1
+            pageQuery !== undefined &&
+            (!/^[1-9]\d*$/.test(pageQuery))
         ) {
             return res.status(400).json({
-                message: "Invalid page or limit value"
+                message: "Page must be a positive integer"
             });
         }
+
+        // Validate limit
+        if (
+            limitQuery !== undefined &&
+            (!/^[1-9]\d*$/.test(limitQuery))
+        ) {
+            return res.status(400).json({
+                message: "Limit must be a positive integer"
+            });
+        }
+
+        const page = pageQuery === undefined ? 1 : Number(pageQuery);
+        let limit = limitQuery === undefined ? 5 : Number(limitQuery);
 
         // Maximum 50 posts per page
         limit = Math.min(limit, 50);
@@ -452,7 +471,6 @@ router.get("/pagination", async (req, res) => {
         });
     }
 });
-
 
 
 module.exports = router;
