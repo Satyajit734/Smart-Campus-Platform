@@ -7,7 +7,7 @@ const Post = require("../models/Post");
 const authMiddleware = require("../middleware/authMiddleware");
 const mongoose = require("mongoose");
 
-// ================ CREATE COMMENT ================
+//  CREATE COMMENT 
 
 router.post("/:postId", authMiddleware, async (req, res) => {
     try {
@@ -57,7 +57,7 @@ router.post("/:postId", authMiddleware, async (req, res) => {
     }
 });
 
-// ================ GET COMMENTS ================
+//  GET COMMENTS 
 
 router.get("/:postId", async (req, res) => {
     try {
@@ -98,7 +98,7 @@ router.get("/:postId", async (req, res) => {
     }
 });
 
-// ================ DELETE COMMENT ================
+//  DELETE COMMENT 
 
 router.delete("/:commentId", authMiddleware, async (req, res) => {
     try {
@@ -139,7 +139,7 @@ router.delete("/:commentId", authMiddleware, async (req, res) => {
     }
 });
 
-// ================ UPDATE COMMENT ================
+//  UPDATE COMMENT 
 
 router.put("/:commentId", authMiddleware, async (req, res) => {
     try {

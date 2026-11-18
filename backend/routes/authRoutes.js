@@ -11,7 +11,7 @@ const authorizeRoles = require("../middleware/authorizeRoles");
 
 
 
-// ================= REGISTER =================
+//  REGISTER
 router.post("/register", async (req, res) => {
     try {
         const { name, email, password } = req.body;
@@ -66,7 +66,9 @@ router.post("/register", async (req, res) => {
         });
     }
 });
-// ================= ADMIN REGISTER =================
+
+
+//  ADMIN REGISTER 
 
 router.post("/admin/register", async (req, res) => {
     try {
@@ -131,7 +133,7 @@ router.post("/admin/register", async (req, res) => {
 });
 
 
-// ================= ADMIN: REGISTER FACULTY =================
+//  ADMIN: REGISTER FACULTY 
 
 router.post(
     "/admin/register-faculty",
@@ -181,7 +183,7 @@ router.post(
                 });
             }
 
-            // Hash password
+            
             const hashedPassword = await bcrypt.hash(password, 10);
 
             // Create Faculty
@@ -219,7 +221,8 @@ router.post(
 );
 
 
-// ================= LOGIN =================
+// LOGIN 
+
 router.post("/login", async (req, res) => {
     try {
         console.log("LOGIN BODY:", req.body);
@@ -289,8 +292,9 @@ router.post("/login", async (req, res) => {
     }
 });
 
-// ================= OWN PROFILE =================
+//  OWN PROFILE 
 // Student, Faculty and Admin can view own profile
+
 router.get(
     "/profile",
     authMiddleware,
@@ -319,7 +323,7 @@ router.get(
     }
 );
 
-// ================= STUDENT ACCESS =================
+// STUDENT ACCESS 
 // Student, Faculty and Admin can access
 router.get(
     "/student",
@@ -333,7 +337,7 @@ router.get(
     }
 );
 
-// ================= FACULTY ACCESS =================
+// FACULTY ACCESS 
 // Faculty can access own faculty route
 // Admin can also access this route
 router.get(
@@ -348,7 +352,7 @@ router.get(
     }
 );
 
-// ==== ADMIN ACCESS ===
+//  ADMIN ACCESS
 // Only Admin can access
 router.get(
     "/admin",
@@ -362,7 +366,7 @@ router.get(
     }
 );
 
-// ================= ADMIN: VIEW ALL USERS =================
+// ADMIN: VIEW ALL USERS 
 router.get(
     "/users",
     authMiddleware,
@@ -387,7 +391,7 @@ router.get(
     }
 );
 
-// ================= ADMIN: VIEW ALL STUDENTS =================
+//  ADMIN: VIEW ALL STUDENTS 
 router.get(
     "/students",
     authMiddleware,
@@ -414,7 +418,8 @@ router.get(
     }
 );
 
-// ================= ADMIN: VIEW ALL FACULTY =================
+//  ADMIN: VIEW ALL FACULTY 
+
 router.get(
     "/faculties",
     authMiddleware,
@@ -441,7 +446,7 @@ router.get(
     }
 );
 
-// ================= ROLE-BASED PROFILE =================
+//ROLE-BASED PROFILE 
 
 const getRoleProfile = (role) => async (req, res) => {
     try {
@@ -470,7 +475,7 @@ const getRoleProfile = (role) => async (req, res) => {
     }
 };
 
-// ================= STUDENT PROFILE =================
+// STUDENT PROFILE 
 
 router.get(
     "/student/profile",
@@ -479,7 +484,7 @@ router.get(
     getRoleProfile("student")
 );
 
-// ================= FACULTY PROFILE =================
+// FACULTY PROFILE 
 
 router.get(
     "/faculty/profile",
@@ -488,7 +493,7 @@ router.get(
     getRoleProfile("faculty")
 );
 
-// ================= ADMIN PROFILE =================
+// ADMIN PROFILE 
 
 router.get(
     "/admin/profile",
@@ -496,7 +501,7 @@ router.get(
     authorizeRoles("admin"),
     getRoleProfile("admin")
 );
-// ================= UPDATE PROFILE =================
+// UPDATE PROFILE 
 
 router.put("/update-profile", authMiddleware, async (req, res) => {
     try {
@@ -552,7 +557,7 @@ router.put("/update-profile", authMiddleware, async (req, res) => {
 });
 
 
-// ================= ADMIN UPDATE USER ROLE =================
+//  ADMIN UPDATE USER ROLE 
 
 router.put(
     "/users/:id/role",
@@ -626,7 +631,7 @@ router.put(
     }
 );
 
-// ================ ADMIN DELETE USER ================
+//  ADMIN DELETE USER
 router.delete(
     "/users/:id",
     authMiddleware,
@@ -692,7 +697,7 @@ router.delete(
 );
 
 
-// ================ ADMIN UPDATE USER DETAILS ================
+//  ADMIN UPDATE USER DETAILS 
 
 router.put(
     "/users/:id/details",
@@ -805,7 +810,7 @@ router.put(
 );
 
 
- // ============== FACULTY: VIEW OWN DEPARTMENT STUDENTS ==============
+ //  FACULTY: VIEW OWN DEPARTMENT STUDENTS 
 
 router.get(
     "/faculty/students",

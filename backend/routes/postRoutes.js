@@ -7,7 +7,7 @@ const authMiddleware = require("../middleware/authMiddleware");
 const mongoose = require("mongoose");
 const authorizeRoles = require("../middleware/authorizeRoles");
 
-// ================ CREATE POST ================
+//  CREATE POST 
 
 router.post("/", authMiddleware, async (req, res) => {
     try {
@@ -45,7 +45,7 @@ router.post("/", authMiddleware, async (req, res) => {
 });
 
 
-// ================ GET ALL POSTS ================
+//  GET ALL POSTS 
 
 router.get("/", async (req, res) => {
     try {
@@ -72,7 +72,7 @@ router.get("/", async (req, res) => {
 
 
 
- // ================ UPDATE POST ================
+ //  UPDATE POST 
 
 router.put("/:id", authMiddleware, async (req, res) => {
     try {
@@ -141,7 +141,7 @@ router.put("/:id", authMiddleware, async (req, res) => {
     }
 });
 
-// ================ DELETE POST ================
+// DELETE POST 
 
 router.delete("/:id", authMiddleware, async (req, res) => {
     try {
@@ -179,7 +179,9 @@ router.delete("/:id", authMiddleware, async (req, res) => {
         });
     }
 });
-// ================ LIKE POST ================
+
+
+//  LIKE POST 
 
 router.post("/:id/like", authMiddleware, async (req, res) => {
     try {
@@ -219,7 +221,7 @@ router.post("/:id/like", authMiddleware, async (req, res) => {
         });
     }
 });  
-// ================ UNLIKE POST ================
+//  UNLIKE POST 
 
 router.delete("/:id/like", authMiddleware, async (req, res) => {
     try {
@@ -259,9 +261,9 @@ router.delete("/:id/like", authMiddleware, async (req, res) => {
         });
     }
 });
-// ================ ADMIN DELETE POST ================
 
-// ================ ADMIN DELETE POST ================
+
+//  ADMIN DELETE POST 
 
 router.delete(
     "/admin/:id",
@@ -302,7 +304,7 @@ router.delete(
     }
 );
 
-// ================ SEARCH POSTS ================
+//  SEARCH POSTS
 
 router.get("/search", async (req, res) => {
     try {
@@ -368,7 +370,7 @@ router.get("/search", async (req, res) => {
 });
 
 
-// ================ FILTER POSTS ================
+// FILTER POSTS 
 
 router.get("/filter", async (req, res) => {
     try {
@@ -412,7 +414,7 @@ router.get("/filter", async (req, res) => {
 
 
 
-// ================ PAGINATION ================
+//  PAGINATION 
 
 router.get("/pagination", async (req, res) => {
     try {

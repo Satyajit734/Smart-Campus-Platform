@@ -3,13 +3,13 @@ const User = require("../models/User");
 const Post = require("../models/Post");
 const Comment = require("../models/Comment");
 
-// ================= STUDENT DASHBOARD =================
+// STUDENT DASHBOARD
 
 const getStudentDashboard = async (req, res) => {
     try {
         const studentId = req.user.id;
 
-        // Fetch student profile
+        
         const student = await User.findById(studentId)
             .select("-password");
 
@@ -19,17 +19,17 @@ const getStudentDashboard = async (req, res) => {
             });
         }
 
-        // Count total posts
+        
         const totalPosts = await Post.countDocuments({
             author: studentId
         });
 
-        // Count total comments
+        
         const totalComments = await Comment.countDocuments({
             author: studentId
         });
 
-        // Calculate total likes
+        
         const studentPosts = await Post.find({
             author: studentId
         }).select("likes");
@@ -66,7 +66,8 @@ const getStudentDashboard = async (req, res) => {
     }
 };
 
-//faculty dashboard//
+//faculty dashboard
+
 const getFacultyDashboard = async (req, res) => {
     try {
         const facultyId = req.user.id;
@@ -124,7 +125,7 @@ const getFacultyDashboard = async (req, res) => {
 };
 
 
-// ================= ADMIN DASHBOARD =================
+//  ADMIN DASHBOARD 
 
 const getAdminDashboard = async (req, res) => {
     try {
