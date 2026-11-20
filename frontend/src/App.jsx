@@ -46,7 +46,7 @@ export default function App() {
     Boolean(localStorage.getItem("campus_token"))
   );
 
-  // Restore saved session
+  // RESTORE SAVED SESSION
   useEffect(() => {
     if (!localStorage.getItem("campus_token")) return;
 
@@ -67,7 +67,7 @@ export default function App() {
 
   }, []);
 
-  // Login
+  // LOGIN
   const login = async (email, password, selectedRole) => {
     const data = await api("/auth/login", {
       method: "POST",
@@ -91,7 +91,7 @@ export default function App() {
     setPage("Posts");
   };
 
-  // Logout
+  // LOGOUT
   const logout = () => {
     clearSession();
 
@@ -100,7 +100,7 @@ export default function App() {
     setShowRegister(false);
   };
 
-  // Registration
+  // REGISTRATION
   const openRegister = (selectedRole) => {
     setRegisterRole(selectedRole);
     setShowRegister(true);
@@ -111,7 +111,7 @@ export default function App() {
     setPage("Posts");
   };
 
-  // Loading screen
+  // LOADING SCREEN
   if (loading) {
     return (
       <div className="loading-screen">
@@ -122,7 +122,7 @@ export default function App() {
     );
   }
 
-  // Login and Registration screens
+  // LOGIN AND REGISTRATION SCREENS
   if (!user) {
     if (showRegister) {
       return (
@@ -143,12 +143,14 @@ export default function App() {
   }
 
   const Page = pageMap[page] || Posts;
+
+  // DISPLAY ROLE
   const role = roleLabel(user.role);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(135deg,#e9f4f7,#f1f5f7_52%,#eaf2f5)]">
 
-      {/* Ambient Background Effects */}
+      {/* AMBIENT BACKGROUND EFFECTS */}
 
       <div
         className="pointer-events-none fixed -left-[210px] top-[20%] z-0
@@ -171,7 +173,7 @@ export default function App() {
         blur-[5px]"
       />
 
-      {/* Liquid Animation - Existing CSS */}
+      {/* LIQUID ANIMATION */}
 
       <div className="liquid-scene" aria-hidden="true">
 
@@ -186,7 +188,7 @@ export default function App() {
 
       </div>
 
-      {/* Navbar */}
+      {/* NAVBAR */}
 
       <Navbar
         role={role}
@@ -195,7 +197,7 @@ export default function App() {
         onNavigate={setPage}
       />
 
-      {/* Sidebar */}
+      {/* SIDEBAR */}
 
       <Sidebar
         role={user.role}
@@ -209,11 +211,11 @@ export default function App() {
         onClose={() => setMenuOpen(false)}
       />
 
-      {/* Main Content */}
+      {/* MAIN CONTENT */}
 
       <main className="relative z-[2] pt-[82px]">
         <Page
-          role={role}
+          role={user.role}
           user={user}
         />
       </main>
