@@ -7,6 +7,8 @@ const postRoutes =require("./routes/postRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const cors = require("cors");
+const resourceRoutes = require("./routes/resourceRoutes");
+const eventRoutes = require("./routes/eventRoutes");
 
 dotenv.config();
 
@@ -23,6 +25,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/resources", resourceRoutes);
+app.use("/api/events", eventRoutes);
 
 const PORT = process.env.PORT || 5000;
 

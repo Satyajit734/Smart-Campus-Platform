@@ -1,16 +1,41 @@
-# React + Vite
+# Smart Campus — Frontend Only
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+This final package contains the Smart Campus frontend UI only.
 
-Currently, two official plugins are available:
+## What was removed
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- No MongoDB connection
+- No Express/API connection
+- No backend authentication
+- No `.env` requirement
+- No database reads/writes
+- No server-side logic
 
-## React Compiler
+The existing liquid-glass UI is preserved. The frontend now uses local React state only until the backend is connected later.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Frontend features
 
-## Expanding the Oxlint configuration
+- Liquid-glass responsive interface
+- Bold, high-readability typography
+- Frontend role selector for Admin, Professor, and Student
+- Sidebar navigation
+- Working sidebar Logout button
+- Working Posts / Academic / Events quick navigation
+- Responsive mobile layout
+- Reduced-motion accessibility support
+- Comments throughout the source explaining the main parts
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Run the frontend
+
+```bash
+npm install
+npm run dev
+```
+
+Then open the Vite development URL shown in the terminal.
+
+## Backend connection later
+
+When the backend is ready, the frontend login, authentication, academic data, accounts, faculty data, and other server-backed features can be connected without replacing the liquid-glass UI.
+
+The current Logout button is intentionally frontend-only: it returns the user to the login screen by resetting React state.

@@ -1,90 +1,100 @@
 
-function Sidebar({ isOpen, onClose }) {
-  const menuItems = [
-    { name: "Dashboard", icon: "⌂" },
-    { name: "Events", icon: "▦" },
+import React from "react";
+
+const baseItems = [
   
-    { name: "Posts", icon: "✎" },
-   
-  ]
+  ["Academic", "◇"],
+  ["Posts", "✦"],
+  ["Events", "◷"],
+  ["Resources", "▱"]
+];
+
+export default function Sidebar({
+  role,
+  open,
+  activePage,
+  onSelect,
+  onLogout,
+  onClose
+}) {
+  const items = [...baseItems];
+
+  if (role === "admin") {
+    items.push(
+      ["Manage Accounts", "◎"],
+      ["Faculty Management", "⌘"]
+    );
+  }
+
+  const handleNavigation = (page) => {
+    onSelect(page);
+    onClose();
+  };
 
   return (
     <>
-      {isOpen && (
+      {open && (
         <div
+          className="sidebar-backdrop"
           onClick={onClose}
-          className="fixed inset-0 top-20 z-30 bg-black/20"
         />
       )}
 
-      <aside
-        className={`
-          fixed left-0 top-20 z-40
-          h-[calc(100vh-80px)]
-          w-64
-          bg-gradient-to-b from-[#164E63] via-[#087EAD] to-[#159FD0]
-          shadow-xl shadow-slate-400/30
-          transition-transform duration-300
-          ${isOpen ? "translate-x-0" : "-translate-x-full"}
-        `}
-      >
-      
-       
+      <aside className={`side-panel glass ${open ? "open" : ""}`}>
 
-     
-        <nav className="flex flex-col gap-3 p-3 mt-5">
+        <div className="side-heading">
+          <div className="side-logo">SC</div>
 
-          {menuItems.map((item, index) => (
-            <a
-              key={item.name}
-              href="#"
-              onClick={onClose}
-              className={`
-                flex items-center gap-4
-                px-5 py-4 rounded-md
-                font-medium transition-all duration-200
-                ${index === 0
-                  ? "bg-white text-[#0786AE] shadow-md"
-                  : "text-white hover:bg-white/20 hover:pl-7"
-                }
-              `}
+          <div>
+            <b>Campus menu</b>
+            <small>Move between spaces</small>
+          </div>
+
+          <button
+            className="close-side"
+            type="button"
+            onClick={onClose}
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="side-items">
+          {items.map(([name, icon]) => (
+            <button
+              key={name}
+              type="button"
+              className={`side-item ${
+                activePage === name ? "active" : ""
+              }`}
+              onClick={() => handleNavigation(name)}
             >
-              <span className="text-2xl w-7 text-center">
-                {item.icon}
-              </span>
-
-              <span>{item.name}</span>
-            </a>
+              <span className="side-icon">{icon}</span>
+              <span>{name}</span>
+              <i>›</i>
+            </button>
           ))}
+        </div>
 
-        </nav>
-       
-<div className="absolute bottom-0 left-0 w-full p-4 border-t border-white/80">
+        <button
+          className="logout-button"
+          type="button"
+          onClick={onLogout}
+        >
+          <span className="logout-icon">↪</span>
+          <span>Logout</span>
+          <i>›</i>
+        </button>
 
-  <button
-    onClick={() => {
-      localStorage.removeItem("token")
-      localStorage.removeItem("user")
-      window.location.href = "/login"
-    }}
-    className="
-      w-full flex items-center gap-4
-      px-5 py-4 rounded-lg
-      text-white font-bold
-      hover:bg-red-500/90
-      hover:text-white
-      transition-all duration-300
-    "
-  >
-    <span className="text-2xl">[⇥</span>
-    <span>Logout</span>
-  </button>
+        <div className="side-bottom glass">
+          <span>✦</span>
+          <div>
+            <b>Liquid workspace</b>
+            <small>Soft, focused and connected</small>
+          </div>
+        </div>
 
-</div>
       </aside>
-      
     </>
-  )
+  );
 }
-
-export default Sidebar
